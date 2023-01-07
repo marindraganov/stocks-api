@@ -157,6 +157,75 @@ namespace StocksAPI.Data
             }
         }
 
+        internal IEnumerable<Transaction> GetAllTransactions()
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmdProc = new SqlCommand("dbo.prcGetAllUserTransactions", con))
+            {
+                cmdProc.CommandType = CommandType.StoredProcedure;
+                con.Open();
+
+                var reader = cmdProc.ExecuteReader();
+
+                var transactions = new List<Transaction>();
+                using (reader)
+                {
+                    while (reader.Read())
+                    {
+                        var transaction = new Transaction();
+                        transaction.Read(reader);
+                        transactions.Add(transaction);
+                    }
+                }
+
+                return transactions;
+            }
+        }
+
+        internal Transaction AddTransactionr(Transaction transaction)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmdProc = new SqlCommand("prcAddUserTransaction", con))
+            {
+                cmdProc.CommandType = CommandType.StoredProcedure;
+                cmdProc.Parameters.AddWithValue("@UserID", transaction.UserID);
+                cmdProc.Parameters.AddWithValue("@TypeID", transaction.TypeID);
+                cmdProc.Parameters.AddWithValue("@StockID", transaction.StockID);
+                cmdProc.Parameters.AddWithValue("@StockPrice", transaction.StockPrice);
+                cmdProc.Parameters.AddWithValue("@Quantity", transaction.Quantity);
+                cmdProc.Parameters.AddWithValue("@Date", transaction.Date);
+
+                con.Open();
+
+                var reader = cmdProc.ExecuteReader();
+
+                var addedTransaction = new Transaction();
+                using (reader)
+                {
+                    reader.Read();
+                    addedTransaction.Read(reader);
+                }
+
+                return addedTransaction;
+            }
+        }
+
+        internal bool RemoveUserTransaction(int id)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmdProc = new SqlCommand("prcRemoveUserTransaction", con))
+            {
+                cmdProc.CommandType = CommandType.StoredProcedure;
+                cmdProc.Parameters.AddWithValue("@ID", id);
+
+                con.Open();
+
+                cmdProc.ExecuteNonQuery();
+
+                return true;
+            }
+        }
+
         public string GetConnectionString(IConfiguration config)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();

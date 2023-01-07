@@ -16,7 +16,7 @@
             return _inMemoryFavorites.Values.Where(v => v.UserID == userID);
         }
 
-        internal void AddFavorite(int stockID, int userID)
+        internal int AddFavorite(int stockID, int userID)
         {
             var added = _dbPersister.AddFavoriteStock(new FavoriteStock
             {
@@ -25,6 +25,8 @@
             });
 
             _inMemoryFavorites.Add(added.ID, added);
+
+            return added.ID;
         }
 
         internal void RemoveFavorite(int stockID, int userID)

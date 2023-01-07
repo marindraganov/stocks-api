@@ -30,9 +30,9 @@ namespace StocksAPI.Controllers
         public IActionResult AddFavorite(int stockID)
         {
             var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
-            _stocksService.AddFavorite(stockID, int.Parse(userID));
+            var addedID = _stocksService.AddFavorite(stockID, int.Parse(userID));
 
-            return Ok();
+            return Ok(new { ID  = addedID });
         }
 
         [Authorize]

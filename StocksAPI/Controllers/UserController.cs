@@ -90,6 +90,39 @@ namespace StocksAPI.Controllers
             return Ok();
         }
 
+        [Authorize]
+        [HttpPost("add-transaction")]
+        public IActionResult AddTransaction([FromBody] TransactionData transaction)
+        {
+            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
+
+            var addedID = _userService.AddUserTransaction(int.Parse(userID), transaction);
+
+            return Ok(new { ID = addedID });
+        }
+
+        [Authorize]
+        [HttpPost("remove-transaction")]
+        public IActionResult RemoveTransaction(int ID)
+        {
+            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
+
+            _userService.RemoveTransactions(int.Parse(userID), ID);
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpGet("get-transaction")]
+        public IActionResult GetTransactions()
+        {
+            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
+
+            var transactions = _userService.GetUserTransactions(int.Parse(userID));
+
+            return Ok(transactions);
+        }
+
         [HttpGet("memory-usage")]
         public IActionResult GetMemoryUsage()
         {

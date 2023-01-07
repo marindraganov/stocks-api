@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using System.Text;
 using StocksAPI.Controllers.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System;
 
 namespace StocksAPI.Data
 {
@@ -14,23 +16,13 @@ namespace StocksAPI.Data
 
         private readonly DbPersister _dbPersister;
         private readonly Dictionary<int, User> _inMemoryUsers;
+        private readonly Dictionary<int, List<Transaction>> _inMemoryUserTransactions;
 
         public UserService(DbPersister dbPersister)
         {
             _dbPersister = dbPersister;
             _inMemoryUsers = GetUsersDictionary(_dbPersister.GetUsers());
-        }
-
-        private Dictionary<int, User> GetUsersDictionary(IEnumerable<User> users)
-        {
-            var result = new Dictionary<int, User>();
-
-            foreach (var user in users)
-            {
-                result.Add(user.ID, user);
-            }
-
-            return result;
+            _inMemoryUserTransactions = GetUserTransactionsDictionary(_dbPersister.GetAllTransactions());
         }
 
         internal User Authenticate(string password, string email)
@@ -108,6 +100,79 @@ namespace StocksAPI.Data
             }
 
             return false;
+        }
+
+        internal IEnumerable<Transaction> GetUserTransactions(int userID)
+        {
+            var transactions = _inMemoryUserTransactions.ContainsKey(userID) ?
+                _inMemoryUserTransactions[userID] :
+                Enumerable.Empty<Transaction>();
+
+            return transactions;
+        }
+
+        internal int AddUserTransaction(int userID, TransactionData tr)
+        {
+            var added = _dbPersister.AddTransactionr(new Transaction
+            {
+                UserID = userID,
+                TypeID = tr.TypeID,
+                StockID = tr.StockID,
+                StockPrice = tr.StockPrice,
+                Quantity = tr.Quantity,
+                Date = tr.Date
+            });
+
+            if (!_inMemoryUserTransactions.ContainsKey(userID))
+            {
+                _inMemoryUserTransactions[userID] = new List<Transaction>();
+            }
+
+            _inMemoryUserTransactions[userID].Add(added);
+
+
+            return added.ID;
+        }
+
+
+        internal void RemoveTransactions(int userID, int transactionID)
+        {
+            var transaction = _inMemoryUserTransactions[userID]?
+                .FirstOrDefault(tr => tr.ID == transactionID);
+
+            if (transaction != null)
+            {
+                _dbPersister.RemoveUserTransaction(transactionID);
+            }
+        }
+
+        private Dictionary<int, List<Transaction>> GetUserTransactionsDictionary(IEnumerable<Transaction> transactions)
+        {
+            var result = new Dictionary<int, List<Transaction>>();
+
+            foreach (var transaction in transactions)
+            {
+                if (!result.ContainsKey(transaction.UserID))
+                {
+                    result.Add(transaction.UserID, new List<Transaction>());
+                }
+
+                result[transaction.UserID].Add(transaction);
+            }
+
+            return result;
+        }
+
+        private Dictionary<int, User> GetUsersDictionary(IEnumerable<User> users)
+        {
+            var result = new Dictionary<int, User>();
+
+            foreach (var user in users)
+            {
+                result.Add(user.ID, user);
+            }
+
+            return result;
         }
     }
 }
