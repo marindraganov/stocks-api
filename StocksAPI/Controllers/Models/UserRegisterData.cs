@@ -1,6 +1,6 @@
 ﻿namespace StocksAPI.Controllers.Models
 {
-    public class UserData
+    public class UserRegisterData
     {
         public string Email { get; set; }
 
@@ -9,5 +9,7 @@
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
+
+        public int AvatarID { get; set; }
     }
 }

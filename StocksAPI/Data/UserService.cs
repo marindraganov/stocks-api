@@ -70,7 +70,7 @@ namespace StocksAPI.Data
             return _inMemoryUsers.Any(u => u.Value.Email == email);
         }
 
-        internal bool RegisterUser(UserData userData)
+        internal bool RegisterUser(UserRegisterData userData)
         {
             if (!HasUserWithEmail(userData.Email))
             {
@@ -90,17 +90,16 @@ namespace StocksAPI.Data
             return false;
         }
 
-        internal bool EditUser(int userID, UserData userData)
+        internal bool EditUser(int userID, UserUpdateData userData)
         {
             if (_inMemoryUsers.ContainsKey(userID))
             {
                 var user = _dbPersister.EditUser(new User
                 {
                     ID = userID,
-                    Email = userData.Email,
                     FisrtName = userData.FirstName,
                     LastName = userData.LastName,
-                    Password = GetHashedPassword(userData.Password)
+                    AvatarID= userData.AvatarID
                 });
 
                 _inMemoryUsers[user.ID] = user;

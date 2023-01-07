@@ -1,6 +1,4 @@
-﻿using System.Security;
-
-namespace StocksAPI.Controllers
+﻿namespace StocksAPI.Controllers.Models
 {
     public class LoginCredentials
     {

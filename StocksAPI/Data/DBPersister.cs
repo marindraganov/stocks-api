@@ -70,10 +70,9 @@ namespace StocksAPI.Data
             {
                 cmdProc.CommandType = CommandType.StoredProcedure;
                 cmdProc.Parameters.AddWithValue("@ID", user.ID);
-                cmdProc.Parameters.AddWithValue("@FisrtName", user.FisrtName);
+                cmdProc.Parameters.AddWithValue("@FirstName", user.FisrtName);
                 cmdProc.Parameters.AddWithValue("@LastName", user.LastName);
-                cmdProc.Parameters.AddWithValue("@Email", user.Email);
-                cmdProc.Parameters.AddWithValue("@Password", user.Password);
+                cmdProc.Parameters.AddWithValue("@AvatarID", user.AvatarID);
 
                 con.Open();
 

@@ -14,6 +14,8 @@ namespace StocksAPI.Data
 
         public string Password { get; set; }
 
+        public int AvatarID { get; set; }
+
         internal void Read(SqlDataReader rs)
         {
             this.ID = (int)rs["ID"];
@@ -21,6 +23,7 @@ namespace StocksAPI.Data
             this.LastName = (string)rs["LastName"];
             this.Email = (string)rs["Email"];
             this.Password = (string)rs["Password"];
+            this.AvatarID = (int)rs["AvatarID"];
         }
     }
 }

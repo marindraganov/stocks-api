@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using StocksAPI.Data;
-using StocksAPI.Controllers.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Diagnostics;
+using StocksAPI.Controllers.Models;
 
 namespace StocksAPI.Controllers
 {
@@ -47,7 +48,13 @@ namespace StocksAPI.Controllers
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
-            return Ok();
+            return Ok(new UserLoginResponse{
+                UserID = user.ID,
+                FirstName = user.FisrtName,
+                LastName = user.LastName,
+                Email = user.Email,
+                AvatarID = user.AvatarID
+            });
         }
 
         [HttpPost("logout")]
@@ -60,7 +67,7 @@ namespace StocksAPI.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register([FromBody]UserData userData)
+        public IActionResult Register([FromBody]UserRegisterData userData)
         {
             if (_userService.HasUserWithEmail(userData.Email))
             {
@@ -74,21 +81,21 @@ namespace StocksAPI.Controllers
 
         [Authorize]
         [HttpPost("update")]
-        public IActionResult Update([FromBody] UserData userData)
+        public IActionResult Update([FromBody] UserUpdateData updateData)
         {
             var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
 
-            _userService.EditUser(int.Parse(userID), userData);
+            _userService.EditUser(int.Parse(userID), updateData);
 
             return Ok();
         }
 
-        [Authorize]
-        [HttpGet("hash")]
-        public IActionResult GetHash(string pass)
+        [HttpGet("memory-usage")]
+        public IActionResult GetMemoryUsage()
         {
-            var t = HttpContext.User.Claims.First(c=> c.Type != "");
-            return Ok(_userService.GetHashedPassword(pass));
+            double memoryBytes = Process.GetCurrentProcess().WorkingSet64;
+
+            return Ok((int)(memoryBytes / (1024*1024)));
         }
     }
 }
