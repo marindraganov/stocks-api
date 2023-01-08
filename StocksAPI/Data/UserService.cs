@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using System.Security.Cryptography;
-using Microsoft.AspNetCore.Identity;
+﻿using System.Security.Cryptography;
 using System.Text;
 using StocksAPI.Controllers.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System;
 
 namespace StocksAPI.Data
 {
@@ -62,7 +58,7 @@ namespace StocksAPI.Data
             return _inMemoryUsers.Any(u => u.Value.Email == email);
         }
 
-        internal bool RegisterUser(UserRegisterData userData)
+        internal int RegisterUser(UserRegisterData userData)
         {
             if (!HasUserWithEmail(userData.Email))
             {
@@ -76,10 +72,10 @@ namespace StocksAPI.Data
 
                 _inMemoryUsers.Add(user.ID, user);
 
-                return true;
+                return user.ID;
             }
 
-            return false;
+            throw new ArgumentException("This email is already in use!");
         }
 
         internal bool EditUser(int userID, UserUpdateData userData)

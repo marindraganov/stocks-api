@@ -74,9 +74,9 @@ namespace StocksAPI.Controllers
                 return BadRequest("User Already Exists!");
             }
 
-            _userService.RegisterUser(userData);
+            var userID = _userService.RegisterUser(userData);
 
-            return Ok();
+            return Ok(new { UserID = userID });
         }
 
         [Authorize]

@@ -1,58 +1,26 @@
-﻿namespace StocksAPI.Data
+﻿using StocksAPI.Data;
+
+namespace StocksAPI.Data
 {
     public class StocksService
     {
-        private readonly DbPersister _dbPersister;
-        private readonly Dictionary<int, FavoriteStock> _inMemoryFavorites;
+        private readonly StocksIDMapping _mapping;
+        private readonly PolygonIOIntegration _dataRetriever;
+        private readonly Dictionary<string, StockInfo> _stocks;
 
-        public StocksService(DbPersister dbPersister)
+        public StocksService(StocksIDMapping mapping, PolygonIOIntegration dataRetriever) 
         {
-            _dbPersister = dbPersister;
-            _inMemoryFavorites = GetFavoritesDictionary(_dbPersister.GetFavorites());
+            _mapping = mapping;
+            _dataRetriever = dataRetriever;
+
+            InitializeStocks();
         }
 
-        public IEnumerable<FavoriteStock> GetFavorites(int userID)
+        private void InitializeStocks()
         {
-            return _inMemoryFavorites.Values.Where(v => v.UserID == userID);
-        }
+            var allStocks = _mapping.GetAllStockSymbols();
 
-        internal int AddFavorite(int stockID, int userID)
-        {
-            var added = _dbPersister.AddFavoriteStock(new FavoriteStock
-            {
-                StockID = stockID,
-                UserID = userID
-            });
-
-            _inMemoryFavorites.Add(added.ID, added);
-
-            return added.ID;
-        }
-
-        internal void RemoveFavorite(int stockID, int userID)
-        {
-            var favorite = _inMemoryFavorites.Where(v => 
-                v.Value.UserID == userID && 
-                v.Value.StockID == stockID)
-                .Select(f => f.Value).FirstOrDefault();
-
-            if(favorite != null) 
-            {
-                _dbPersister.RemoveFavoriteStock(favorite.ID);
-                _inMemoryFavorites.Remove(favorite.ID);
-            } 
-        }
-
-        private Dictionary<int, FavoriteStock> GetFavoritesDictionary(IEnumerable<FavoriteStock> favorites)
-        {
-            var result = new Dictionary<int, FavoriteStock>();
-
-            foreach (var favorite in favorites)
-            {
-                result.Add(favorite.ID, favorite);
-            }
-
-            return result;
+            _dataRetriever.GetTickersData(allStocks);
         }
     }
 }

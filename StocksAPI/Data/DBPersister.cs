@@ -47,6 +47,7 @@ namespace StocksAPI.Data
                 cmdProc.Parameters.AddWithValue("@LastName", user.LastName);
                 cmdProc.Parameters.AddWithValue("@Email", user.Email);
                 cmdProc.Parameters.AddWithValue("@Password", user.Password);
+                cmdProc.Parameters.AddWithValue("@AvatarID", user.AvatarID);
 
                 con.Open();
 
