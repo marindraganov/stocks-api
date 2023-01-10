@@ -9,38 +9,47 @@ namespace StocksAPI.Controllers
     public class FavoritesController : ControllerBase
     {
         private FavoritesService _stocksService;
+        private UserService _userService;
 
-        public FavoritesController(FavoritesService stocksService)
+        public FavoritesController(FavoritesService stocksService, UserService userService)
         {
             _stocksService = stocksService;
+            _userService = userService;
         }
 
-        [Authorize]
+
         [HttpGet("favorites")]
-        public IActionResult GetFavorites()
+        public IActionResult GetFavorites([FromHeader(Name = "AuthToken")] string token)
         {
-            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
-            var favorites = _stocksService.GetFavorites(int.Parse(userID));
+            if (!_userService.IsLogged(token)) return Unauthorized();
+
+            var userID = _userService.GetUserID(token);
+
+            var favorites = _stocksService.GetFavorites(userID);
 
             return Ok(favorites);
         }
 
-        [Authorize]
         [HttpPost("add-favorite")]
-        public IActionResult AddFavorite(int stockID)
+        public IActionResult AddFavorite([FromHeader(Name = "AuthToken")] string token, int stockID)
         {
-            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
-            var addedID = _stocksService.AddFavorite(stockID, int.Parse(userID));
+            if (!_userService.IsLogged(token)) return Unauthorized();
+
+            var userID = _userService.GetUserID(token);
+
+            var addedID = _stocksService.AddFavorite(stockID, userID);
 
             return Ok(new { ID  = addedID });
         }
 
-        [Authorize]
         [HttpPost("remove-favorite")]
-        public IActionResult RemoveFavorite(int stockID)
+        public IActionResult RemoveFavorite([FromHeader(Name = "AuthToken")] string token, int stockID)
         {
-            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
-            _stocksService.RemoveFavorite(stockID, int.Parse(userID));
+            if (!_userService.IsLogged(token)) return Unauthorized();
+
+            var userID = _userService.GetUserID(token);
+
+            _stocksService.RemoveFavorite(stockID, userID);
 
             return Ok();
         }

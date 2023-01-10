@@ -1,6 +1,6 @@
 ﻿namespace StocksAPI.Controllers.Models
 {
-    public class UserLoginResponse
+    public class UserResponse
     {
         public int UserID { get; set; }
 

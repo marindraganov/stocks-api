@@ -14,7 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<DbPersister, DbPersister>();
 builder.Services.AddSingleton<UserService, UserService>();
 builder.Services.AddSingleton<FavoritesService, FavoritesService>();
-builder.Services.AddSingleton<StocksIDMapping, StocksIDMapping>();
+builder.Services.AddSingleton<StocksBaseInfo, StocksBaseInfo>();
 builder.Services.AddSingleton<PolygonIOIntegration, PolygonIOIntegration>();
 builder.Services.AddSingleton<StocksService, StocksService>();
 
@@ -41,6 +41,7 @@ builder.Services.AddAuthentication()
             return Task.CompletedTask;
         };
 
+        options.Cookie.HttpOnly = false;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.None;
     });

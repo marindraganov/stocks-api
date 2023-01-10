@@ -4,23 +4,64 @@ namespace StocksAPI.Data
 {
     public class StocksService
     {
-        private readonly StocksIDMapping _mapping;
+        private readonly StocksBaseInfo _stocksBaseInfo;
         private readonly PolygonIOIntegration _dataRetriever;
-        private readonly Dictionary<string, StockInfo> _stocks;
+        private readonly Dictionary<string, StockInfo> _inmemoryStocks;
 
-        public StocksService(StocksIDMapping mapping, PolygonIOIntegration dataRetriever) 
+        public StocksService(StocksBaseInfo stocksBaseInfo, PolygonIOIntegration dataRetriever) 
         {
-            _mapping = mapping;
+            _stocksBaseInfo = stocksBaseInfo;
             _dataRetriever = dataRetriever;
+            _inmemoryStocks = new Dictionary<string, StockInfo>();
 
             InitializeStocks();
         }
 
-        private void InitializeStocks()
+        public IEnumerable<StockInfo> GetAllStocks()
         {
-            var allStocks = _mapping.GetAllStockSymbols();
+            return _inmemoryStocks.Values;
+        }
 
-            _dataRetriever.GetTickersData(allStocks);
+        public IEnumerable<StockInfo> GetStocksByID(IEnumerable<int> stockIDs)
+        {
+            var result = new List<StockInfo>();
+
+            foreach (var id in stockIDs)
+            {
+                var symbol = _stocksBaseInfo.GetSymbol(id);
+                if (_inmemoryStocks.ContainsKey(symbol))
+                {
+                    result.Add(_inmemoryStocks[symbol]);
+                }
+            }
+
+            return result;
+        }
+
+        private async void InitializeStocks()
+        {
+            var allStocks = _stocksBaseInfo.GetAllStocks();
+
+            //_dataRetriever.GetTickersDetails(allStocks.Select(st => st.Symbol));
+
+            await _dataRetriever.GetTickersData(allStocks.Select(st => st.Symbol)).ContinueWith(t =>
+            {
+                foreach (var ticker in t.Result)
+                {
+                    var stockBase = _stocksBaseInfo.GetStock(ticker.Symbol);
+
+                    _inmemoryStocks[ticker.Symbol] = new StockInfo
+                    {
+                        ID = stockBase.ID,
+                        SharesCount = stockBase.SharesCount,
+                        Name = stockBase.Name,
+                        Symbol = ticker.Symbol,
+                        Price = ticker.Price,
+                        TodayPriceChange = ticker.PriceTodayChange,
+                        Volume = ticker.Volume
+                    };
+                }
+            });
         }
     }
 }

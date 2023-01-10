@@ -1,4 +1,6 @@
-﻿namespace StocksAPI.Data
+﻿using System.Text.Json.Serialization;
+
+namespace StocksAPI.Data
 {
     public class StockInfo
     {
@@ -8,10 +10,17 @@
 
         public string Name { get; set; }
 
-        public long NumberOfShares { get; set; }
+        public long SharesCount { get; set; }
 
-        public decimal Price { get; set; }
+        public double Price { get; set; }
 
-        public long MarketCap() => (long)(Price * NumberOfShares);
+        public long Volume { get; set; }
+
+        [JsonIgnore]
+        public double TodayPriceChange { get; set; }
+
+        public double TodayPriceChangePercent => (TodayPriceChange / Price)  * 100;
+
+        public long MarketCap => (long)(Price * SharesCount);
     }
 }

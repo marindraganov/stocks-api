@@ -6,6 +6,7 @@ using StocksAPI.Data;
 using Microsoft.AspNetCore.Authorization;
 using System.Diagnostics;
 using StocksAPI.Controllers.Models;
+using Microsoft.AspNetCore.Http.Headers;
 
 namespace StocksAPI.Controllers
 {
@@ -29,39 +30,28 @@ namespace StocksAPI.Controllers
                 return Unauthorized("Invalid Credentials!");
             }
 
-            var claims = new List<Claim>
+            var token = _userService.LoginIn(user.ID);
+
+            return Ok(new
             {
-                new Claim(ClaimTypes.Name, user.FisrtName),
-                new Claim("UserID", user.ID.ToString())
-            };
-
-            var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var authProperties = new AuthenticationProperties
-            {
-                ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60),
-            };
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
-
-            return Ok(new UserLoginResponse{
-                UserID = user.ID,
-                FirstName = user.FisrtName,
-                LastName = user.LastName,
-                Email = user.Email,
-                AvatarID = user.AvatarID
+                AuthToken = token,
+                User = new UserResponse
+                {
+                    UserID = user.ID,
+                    FirstName = user.FisrtName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    AvatarID = user.AvatarID
+                }
             });
         }
 
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> Logout([FromHeader(Name = "AuthToken")] string token)
         {
-            await HttpContext.SignOutAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme);
+            if(!_userService.IsLogged(token)) return Unauthorized();
+
+            _userService.LogOut(token);
 
             return Ok();
         }
@@ -79,46 +69,69 @@ namespace StocksAPI.Controllers
             return Ok(new { UserID = userID });
         }
 
-        [Authorize]
-        [HttpPost("update")]
-        public IActionResult Update([FromBody] UserUpdateData updateData)
+        [HttpGet("get")]
+        public IActionResult Get([FromHeader(Name = "AuthToken")] string token)
         {
-            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
+            if (!_userService.IsLogged(token)) return Unauthorized();
 
-            _userService.EditUser(int.Parse(userID), updateData);
+            var userID = _userService.GetUserID(token);
+
+            var user = _userService.GetUser(userID);
+
+            return Ok(new UserResponse
+            {
+                UserID = user.ID,
+                FirstName = user.FisrtName,
+                LastName = user.LastName,
+                Email = user.Email,
+                AvatarID = user.AvatarID
+            });
+        }
+
+        [HttpPost("update")]
+        public IActionResult Update([FromHeader(Name = "AuthToken")] string token, [FromBody] UserUpdateData updateData)
+        {
+            if (!_userService.IsLogged(token)) return Unauthorized();
+
+            var userID = _userService.GetUserID(token);
+
+            _userService.EditUser(userID, updateData);
 
             return Ok();
         }
 
-        [Authorize]
         [HttpPost("add-transaction")]
-        public IActionResult AddTransaction([FromBody] TransactionData transaction)
+        public IActionResult AddTransaction([FromHeader(Name = "AuthToken")] string token, [FromBody] TransactionData transaction)
         {
-            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
+            if (!_userService.IsLogged(token)) return Unauthorized();
 
-            var addedID = _userService.AddUserTransaction(int.Parse(userID), transaction);
+            var userID = _userService.GetUserID(token);
+
+            var addedID = _userService.AddUserTransaction(userID, transaction);
 
             return Ok(new { ID = addedID });
         }
 
-        [Authorize]
         [HttpPost("remove-transaction")]
-        public IActionResult RemoveTransaction(int ID)
+        public IActionResult RemoveTransaction([FromHeader(Name = "AuthToken")] string token, int ID)
         {
-            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
+            if (!_userService.IsLogged(token)) return Unauthorized();
 
-            _userService.RemoveTransactions(int.Parse(userID), ID);
+            var userID = _userService.GetUserID(token);
+
+            _userService.RemoveTransactions(userID, ID);
 
             return Ok();
         }
 
-        [Authorize]
         [HttpGet("get-transaction")]
-        public IActionResult GetTransactions()
+        public IActionResult GetTransactions([FromHeader(Name = "AuthToken")] string token)
         {
-            var userID = HttpContext.User.Claims.First(claim => claim.Type == "UserID").Value;
+            if (!_userService.IsLogged(token)) return Unauthorized();
 
-            var transactions = _userService.GetUserTransactions(int.Parse(userID));
+            var userID = _userService.GetUserID(token);
+
+            var transactions = _userService.GetUserTransactions(userID);
 
             return Ok(transactions);
         }

@@ -11,6 +11,7 @@ namespace StocksAPI.Data
         HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
 
         private readonly DbPersister _dbPersister;
+        private readonly Dictionary<string, int> _loggedInUserTokens;
         private readonly Dictionary<int, User> _inMemoryUsers;
         private readonly Dictionary<int, List<Transaction>> _inMemoryUserTransactions;
 
@@ -19,6 +20,7 @@ namespace StocksAPI.Data
             _dbPersister = dbPersister;
             _inMemoryUsers = GetUsersDictionary(_dbPersister.GetUsers());
             _inMemoryUserTransactions = GetUserTransactionsDictionary(_dbPersister.GetAllTransactions());
+            _loggedInUserTokens = new Dictionary<string, int>();
         }
 
         internal User Authenticate(string password, string email)
@@ -34,6 +36,27 @@ namespace StocksAPI.Data
             }
 
             return null;
+        }
+
+        internal string LoginIn(int userID) 
+        {
+            string token = Guid.NewGuid().ToString();
+            _loggedInUserTokens[token] = userID;
+
+            return token;
+        }
+
+        internal void LogOut(string token)
+        {
+            if (_loggedInUserTokens.ContainsKey(token))
+            {
+                _loggedInUserTokens.Remove(token);
+            }
+        }
+
+        internal bool IsLogged(string token)
+        {
+            return _loggedInUserTokens.ContainsKey(token);
         }
 
         public string GetHashedPassword(string pass)
@@ -67,7 +90,8 @@ namespace StocksAPI.Data
                     Email = userData.Email,
                     FisrtName = userData.FirstName,
                     LastName = userData.LastName,
-                    Password = GetHashedPassword(userData.Password)
+                    Password = GetHashedPassword(userData.Password),
+                    AvatarID = userData.AvatarID
                 });
 
                 _inMemoryUsers.Add(user.ID, user);
@@ -140,6 +164,16 @@ namespace StocksAPI.Data
             {
                 _dbPersister.RemoveUserTransaction(transactionID);
             }
+        }
+
+        internal int GetUserID(string token)
+        {
+            return this._loggedInUserTokens[token];
+        }
+
+        internal User GetUser(int userID)
+        {
+            return this._inMemoryUsers[userID];
         }
 
         private Dictionary<int, List<Transaction>> GetUserTransactionsDictionary(IEnumerable<Transaction> transactions)
